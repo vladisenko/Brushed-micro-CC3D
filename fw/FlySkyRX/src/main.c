@@ -26,10 +26,7 @@ Sources:
 #define LED_OFF()				do { GPIOA->BSRR = GPIO_BSRR_BS_1; } while(0)
 
 
-
 uint8_t DSMFrame[DSM_FRAME_LENGTH];
-
-
 
 const uint8_t A7105_regs[] = {
   0xff, 0x42, 0x00, 0x14, 0x00, 0xff, 0xff , 0x00, 0x00, 0x00, 0x00, 0x01, 0x21, 0x05, 0x00, 0x50,
@@ -78,7 +75,6 @@ void FlySkyBind (void);
 void NextChannel (void);
 
 
-
 int main (void)
 {
 	uint32_t time_last_dms = 0;
@@ -86,13 +82,12 @@ int main (void)
 	uint32_t time_led = 0;
 	uint32_t id;
 	
-	uint32_t timeout_flysky = MS(1600);
+	uint32_t timeout_flysky = US(1600);
 	uint16_t lost_pkg_flysky = 0;
 		
 	uint8_t bind;
 	uint8_t have_new_pkg_flysky = 0;
 	uint8_t led_state = 0, led_flashing = 0;
-	
 	
 	
 	HWInit();
@@ -144,14 +139,7 @@ int main (void)
 			}
 		}
 		
-		/*
-		if ((GetTick() - time_last_pkg_flysky) > US(1500))
-		{
-			NextChannel();
-			time_last_pkg_flysky = GetTick();
-		}
-		*/
-		
+			
 		if ((GetTick() - time_last_pkg_flysky) >= timeout_flysky)
 		{
 			NextChannel();	
@@ -160,7 +148,6 @@ int main (void)
 			if (lost_pkg_flysky < UINT16_MAX) lost_pkg_flysky++;
 			timeout_flysky = (lost_pkg_flysky < 120) ? (US(1500)) : (US(1600));
 		}
-		
 		
 		
 		if ((GetTick() - time_last_dms) > MS(11))
@@ -238,8 +225,7 @@ int main (void)
 			default:
 			break;		
 		}
-		
-		
+
 		__WFI();
 	}
 }
@@ -321,7 +307,6 @@ uint8_t CheckJumper (void)
 
 
 
-
 void DelayTick (uint32_t t)
 {
 	uint32_t start = Tick;
@@ -334,7 +319,6 @@ uint32_t GetTick (void)
 {
 	return Tick;
 }	
-	
 
 
 
@@ -384,6 +368,7 @@ void FlySkyBind (void)
 }
 
 
+
 void FlySkyInit (void)
 {
 	uint16_t i;
@@ -417,11 +402,3 @@ void NextChannel (void)
 	chancol = (chancol + 1) % 16;
 	A7105SetChannel(channel);
 }
-
-
-
-
-
-
-
-
