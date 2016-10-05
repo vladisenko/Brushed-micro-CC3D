@@ -16,7 +16,7 @@ Sources:
 #include "dsm.h"
 #include "flash.h"
 
-#define FLYSKY_PACKET_SIZE 		21
+#define FLYSKY_PACKET_SIZE		21
 
 #define TICK_US					100
 #define US(us)					(((us) + TICK_US/2)/TICK_US)
@@ -108,8 +108,8 @@ int main (void)
 	}
   
 	id = (txid[1] | ((uint32_t)txid[2] << 8) | ((uint32_t)txid[3] << 16) | ((uint32_t)txid[4] << 24));
-	chanrow = id % 16;
-	chanoffset = (id & 0xff) / 16;
+	chanrow = id & 0x0F;
+	chanoffset = ((id & 0xF0) >> 4) + 1;
 	chancol = 0;
 	if (chanoffset > 9) chanoffset = 9; //from sloped soarer findings, bug in flysky protocol
 	
@@ -161,7 +161,11 @@ int main (void)
 				time_last_dms = GetTick();
 			
 				DSMFrame[0] = 0;
-				DSMFrame[1] = 0xB2;
+#if DSM_11BIT
+				DSMFrame[1] = 0x12;
+#else
+				DSMFrame[1] = 0x01;				
+#endif				
 				
 				for (ch = 0; ch < DSM_CHANNELS_PER_FRAME; ch++)
 				{
@@ -345,11 +349,14 @@ void FlySkyBind (void)
 				uint16_t i;
 				
 				A7105ReadFIFO(&rcv[0], FLYSKY_PACKET_SIZE);
-				for(i = 0; i < sizeof(txid); i++)
+				if (rcv[0] == 0xAA)
 				{
-					txid[i] = rcv[i];
+					for(i = 0; i < sizeof(txid); i++)
+					{
+						txid[i] = rcv[i];
+					}
+					binded = 1;
 				}
-				binded = 1;
 			}
 		}	
 		
@@ -363,7 +370,7 @@ void FlySkyBind (void)
 				LED_OFF();
 			
 		}
-    }
+	}
 	LED_ON();
 }
 
@@ -398,7 +405,7 @@ void FlySkyInit (void)
 void NextChannel (void)
 {
 	channel = tx_channels[chanrow][chancol] - chanoffset;
-	channel--;
-	chancol = (chancol + 1) % 16;
+	chancol++;
+	chancol	&= 0x0F;
 	A7105SetChannel(channel);
 }
